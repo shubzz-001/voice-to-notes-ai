@@ -1,48 +1,42 @@
-# 🎓 Lecture Voice-to-Notes Generator using AI
+# 🎓 Lecture Voice-to-Notes AI
 
-An AI-powered application that converts lecture audio into structured notes, summaries, quizzes, and downloadable PDFs using Speech-to-Text and Natural Language Processing techniques.
+An AI-powered full-stack application that converts **lecture audio/video** into:
+- 📄 Transcripts
+- 📝 Structured notes
+- ❓ Quiz questions
+- 📑 Downloadable PDFs
 
----
-
-## 📌 Problem Statement
-
-Students often miss important points during lectures as it is difficult to listen, understand, and take notes simultaneously. Existing tools either provide raw transcripts or require manual effort.
-
-This project aims to automate the entire process by converting lecture audio into:
-- Clean transcripts
-- Structured study notes
-- Auto-generated quizzes
-- Downloadable PDFs
+Built using **FastAPI, Streamlit, Whisper, and NLP models**.
 
 ---
 
 ## 🚀 Features
-
-- 🎤 Converts lecture audio to text using Whisper
-- 🧠 Generates structured notes using AI models
-- ❓ Creates quizzes for self-assessment
-- 📄 Exports notes as PDF
-- 🌐 REST API using FastAPI
-- 🖥️ Interactive UI using Streamlit
-- 📂 Supports long lecture audio via chunking
+- Audio & video lecture support
+- Background processing (non-blocking)
+- JWT authentication
+- Lecture history per user
+- Large file uploads
+- PDF export
+- Streamlit dashboard
 
 ---
 
-## 🛠️ Tech Stack
-
-### Backend
-- Python 3.10
+## 🛠 Tech Stack
+**Backend**
 - FastAPI
+- SQLAlchemy
+- JWT Authentication
 - Whisper (Speech-to-Text)
-- HuggingFace Transformers
-- Pydub
-- ReportLab
+- NLP (Notes & Quiz Generation)
 
-### Frontend
+**Frontend**
 - Streamlit
 
-### AI / ML
-- OpenAI Whisper
-- FLAN-T5 (Text-to-Text Generation)
-
 ---
+
+## 📦 Installation
+
+```bash
+git clone https://github.com/shubzz-001/voice-to-notes-ai.git
+cd voice-to-notes-ai
+pip install -r requirements.txt
