@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: lecture-notes-backend
+    name: lecture-notes-backend-1
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
