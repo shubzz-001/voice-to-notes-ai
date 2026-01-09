@@ -1,0 +1,22 @@
+ # Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+
+# Virtual environments
+venv/
+.env/
+.env.*
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Data (large & generated files)
+data/audio/
+data/outputs/
+
+# OS
+.DS_Store
+Thumbs.db
