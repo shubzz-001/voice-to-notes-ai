@@ -4,7 +4,12 @@ import time
 
 st.set_page_config(page_title="Lecture AI", layout="wide")
 
-API_BASE = "http://127.0.0.1:8000"
+API_BASE = "https://shubhrajee001-lecture-voice-to-notes-backend.hf.space"
+
+try:
+    requests.get(API_BASE, timeout=5)
+except:
+    st.info("Waking up backend, please wait 1–2 minutes...")
 
 # ---------------- SESSION ----------------
 if "token" not in st.session_state:
@@ -33,9 +38,19 @@ if st.sidebar.button("Login"):
 if st.sidebar.button("Sign Up"):
     res = requests.post(
         f"{API_BASE}/signup/",
-        params={"username": username, "password": password}
+        json={"username": username, "password": password},
+        timeout=120
     )
-    st.sidebar.info(res.json().get("message", "Signup completed"))
+
+    if res.status_code == 200:
+        try:
+            data = res.json()
+            st.sidebar.info(data.get("message", "Signup completed"))
+        except:
+            st.sidebar.error("Signup failed: invalid server response")
+    else:
+        st.sidebar.error(f"Signup failed ({res.status_code})")
+
 
 # ---------------- LOGIN GUARD ----------------
 if not st.session_state["token"]:

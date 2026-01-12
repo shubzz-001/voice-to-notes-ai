@@ -22,7 +22,17 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
-app = FastAPI()
+app = FastAPI(
+    title="Lecture Voice-to-Notes API",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json"
+)
+
+@app.get("/")
+def root():
+    return {"status": "ok", "message": "Backend is running"}
+
 
 os.makedirs("data/audio", exist_ok=True)
 os.makedirs("data/outputs", exist_ok=True)
