@@ -4,7 +4,7 @@ import time
 
 st.set_page_config(page_title="Lecture AI", layout="wide")
 
-API_BASE = "https://shubhrajee001-lecture-voice-to-notes-backend.hf.space"
+API_BASE = "http://127.0.0.1:8000"
 
 try:
     requests.get(API_BASE, timeout=5)
