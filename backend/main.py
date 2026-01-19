@@ -93,22 +93,105 @@ def login(username: str, password: str):
 
 # ---------------- BACKGROUND JOB ----------------
 def process_lecture_background(file_path: str, filename: str, username: str):
-    transcript = transcribe(file_path)
-    notes = generate_notes(transcript)
-    quiz = generate_quiz(transcript)
+    try :
+        # 1 - Transcribe (audio/video)
+        transcription = transcribe(file_path)
 
-    pdf_path = f"data/outputs/{filename}.pdf"
-    export_pdf(notes, pdf_path)
+        transcript_text = transcription["text"]
+        transcript_segments = transcription["segments"]
 
+        # 2 - Generate notes & quiz from TEXT ONLY
+        notes = generate_notes(transcript_text)
+        quiz = generate_quiz(transcript_text)
+
+        # 3 - Export PDF
+        pdf_path = f"data/outputs/{filename}.pdf"
+        export_pdf(notes, pdf_path)
+
+        duration_minutes = round(
+            transcription["segments"][-1]["end"] / 60, 2
+        )
+
+        topics = notes.get("key_points",[])
+
+        # 4 - Save to DB
+        db = SessionLocal()
+        history = LectureHistory(
+            username=username,
+            transcript=transcript_text,  # clean text
+            notes=notes,
+            segments=transcript_segments, # timestamped data
+            duration_minutes=duration_minutes,
+            topics=topics
+        )
+
+        db.add(history)
+        db.commit()
+        db.close()
+
+    except Exception as e :
+        print("Background process failed: ", e)
+
+    finally :
+        if os.path.exists(file_path) :
+            os.remove(file_path)
+
+# ---------------- DASHBOARD -------------
+@app.get("/dashboard/")
+def dashboard(current_user: str = Depends(get_current_user)):
     db = SessionLocal()
-    history = LectureHistory(
-        username=username,
-        transcript=transcript,
-        notes=notes
-    )
-    db.add(history)
-    db.commit()
+    lectures = db.query(LectureHistory)\
+                 .filter(LectureHistory.username == current_user)\
+                 .all()
     db.close()
+
+    total_lectures = len(lectures)
+    total_time = sum(l.duration_minutes for l in lectures)
+
+    # Estimate time saved (manual notes ≈ 2x lecture time)
+    time_saved = round(total_time * 2 - total_time, 2)
+
+    all_topics = []
+    for l in lectures:
+        all_topics.extend(l.topics or [])
+
+    topic_freq = {t: all_topics.count(t) for t in set(all_topics)}
+
+    return {
+        "lectures_processed": total_lectures,
+        "total_learning_time_minutes": round(total_time, 2),
+        "estimated_time_saved_minutes": time_saved,
+        "topics_covered": topic_freq
+    }
+
+# ---------------- SEARCH ----------------
+@app.get("/search/")
+def search_lectures(
+    query: str,
+    current_user: str = Depends(get_current_user)
+):
+    db = SessionLocal()
+    lectures = db.query(LectureHistory)\
+                 .filter(
+                     LectureHistory.username == current_user,
+                     LectureHistory.transcript.contains(query)
+                 ).all()
+    db.close()
+
+    results = []
+
+    for l in lectures:
+        matches = [
+            s["text"] for s in l.segments
+            if query.lower() in s["text"].lower()
+        ]
+
+        results.append({
+            "lecture_id": l.id,
+            "matches": matches[:5]
+        })
+
+    return results
 
 # ---------------- PROCESS ----------------
 @app.post("/process/")

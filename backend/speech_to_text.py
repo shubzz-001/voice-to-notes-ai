@@ -53,14 +53,22 @@ def split_audio(audio_path: str, chunk_length_ms=5 * 60 * 1000):
 
 # Main Transcription Function
 
-def transcribe(file_path: str) -> str:
+def transcribe(file_path: str):
     """
     Transcribe audio OR video file using Whisper
+    Returns:
+    {
+        "text": full transcript,
+        "segments": [
+            {"start": float, "end": float, "text": str}
+        ]
+    }
     """
+
     ext = file_path.split(".")[-1].lower()
     temp_audio = None
 
-    # If video, extract audio first
+    # If video → extract audio
     if ext in ["mp4", "mkv", "avi", "mov"]:
         temp_audio = extract_audio_from_video(file_path)
         audio_path = temp_audio
@@ -68,15 +76,38 @@ def transcribe(file_path: str) -> str:
         audio_path = file_path
 
     chunks = split_audio(audio_path)
+
     full_text = ""
+    all_segments = []
+
+    current_offset = 0.0  # keeps correct timestamps across chunks
 
     for chunk in chunks:
         result = model.transcribe(chunk, fp16=False)
+
+        # Append text
         full_text += result["text"] + " "
+
+        # Adjust timestamps for each chunk
+        for seg in result["segments"]:
+            all_segments.append({
+                "start": round(seg["start"] + current_offset, 2),
+                "end": round(seg["end"] + current_offset, 2),
+                "text": seg["text"].strip()
+            })
+
+        # Estimate duration of this chunk for offset
+        audio_chunk = AudioSegment.from_file(chunk)
+        current_offset += len(audio_chunk) / 1000.0  # ms → sec
+
         os.remove(chunk)
 
     # Cleanup extracted audio
     if temp_audio and os.path.exists(temp_audio):
         os.remove(temp_audio)
 
-    return full_text.strip()
+    return {
+        "text": full_text.strip(),
+        "segments": all_segments
+    }
+

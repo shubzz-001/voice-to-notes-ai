@@ -1,25 +1,25 @@
 FROM python:3.10-slim
 
-# Install system dependencies
+# To Install system dependencies
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Set workdir
+# To Set workdir
 WORKDIR /app
 
-# Copy requirements
+# To Copy requirements
 COPY requirements.txt .
 
-# Install Python deps
+# To Install Python deps
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy app code
-COPY . .
+# source code Copying
+COPY backend ./backend
 
-# Expose port
+# Exposing HF port
 EXPOSE 7860
 
-# Start FastAPI
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "7860"]
+# To Start FastAPI
+CMD ["python", "-m", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "7860"]
