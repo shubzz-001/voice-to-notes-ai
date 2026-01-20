@@ -9,7 +9,7 @@ st.set_page_config(
     layout="wide"
 )
 
-API_BASE = "https://shubhrajee001-lecture-voice-to-notes-backend.hf.space"
+API_BASE = "https://shubhraje001-lecture-voice-to-notes-backend.hf.space"
 
 
 # ---------------- BACKEND WAKE-UP ----------------
@@ -46,16 +46,31 @@ if st.sidebar.button("Login"):
 
 # SIGNUP
 if st.sidebar.button("Sign Up"):
-    res = requests.post(
-        f"{API_BASE}/signup/",
-        params={"username": username, "password": password},
-        timeout=120
-    )
-
-    if res.status_code == 200:
-        st.sidebar.success("Account created successfully ✅")
+    if not username or not password:
+        st.sidebar.warning("Please enter username and password")
     else:
-        st.sidebar.error("Signup failed")
+        try:
+            res = requests.post(
+                f"{API_BASE}/signup/",
+                params={
+                    "username": username.strip(),
+                    "password": password.strip()
+                },
+                timeout=15
+            )
+
+            if res.status_code == 200:
+                data = res.json()
+                if data.get("success"):
+                    st.sidebar.success(data.get("message", "Signup successful"))
+                else:
+                    st.sidebar.error(data.get("message", "Signup failed"))
+            else:
+                st.sidebar.error(f"Signup failed (HTTP {res.status_code})")
+
+        except requests.exceptions.RequestException as e:
+            st.sidebar.error("Cannot reach backend")
+
 
 # ---------------- LOGIN GUARD ----------------
 if not st.session_state.token:

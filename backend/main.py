@@ -11,7 +11,7 @@ from backend.speech_to_text import transcribe
 from backend.quiz_generator import generate_quiz
 from backend.notes_generator import generate_notes
 from backend.file_export import export_pdf
-from backend.database import SessionLocal
+from backend.database import SessionLocal, engine, Base
 from backend.models import User, LectureHistory
 
 # ---------------- CONFIG ----------------
@@ -28,6 +28,10 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json"
 )
+
+@app.on_event("startup")
+def on_startup():
+    Base.metadata.create_all(bind=engine)
 
 @app.get("/")
 def root():
