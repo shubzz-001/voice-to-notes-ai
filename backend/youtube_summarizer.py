@@ -4,6 +4,12 @@ import subprocess
 import os
 import uuid
 import sys
+import ssl
+
+# Disable SSL verification for yt-dlp (needed in some networks)
+os.environ['PYTHONHTTPSVERIFY'] = '0'
+if hasattr(ssl, '_create_unverified_context'):
+    ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def extract_video_id(url: str) -> Optional[str]:
@@ -67,7 +73,8 @@ def download_youtube_audio(video_url: str, output_dir: str = "/data/youtube") ->
             "--audio-quality", "0",
             "--output", output_template,
             "--no-warnings",
-            "--no-check-certificate",  # Sometimes needed for corporate networks
+            "--no-check-certificate",  # Bypass SSL verification
+            "--legacy-server-connect",  # Use older connection method
             video_url
         ]
 

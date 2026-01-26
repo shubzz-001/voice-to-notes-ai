@@ -2,13 +2,12 @@ from sqlalchemy import Column, Integer, String, Text, JSON, Float, DateTime
 from datetime import datetime
 from backend.database import Base
 
-
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
     username = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
-    # Remove email and created_at to match existing database
+    # Removed email and created_at to match existing database
 
 
 class LectureHistory(Base):

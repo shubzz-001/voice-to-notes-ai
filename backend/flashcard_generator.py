@@ -12,7 +12,7 @@ quiz_model = pipeline(
 
 def generate_flashcards(text: str, num_cards: int = 10) -> List[Dict[str, str]]:
     """
-    Generate flashcards (Q&A pairs) from lecture text
+    Generates flashcards (Q&A pairs) from lecture text
     Returns list of dicts with 'question' and 'answer' keys
     """
     if not text or len(text) < 100:

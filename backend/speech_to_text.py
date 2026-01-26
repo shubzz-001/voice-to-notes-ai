@@ -11,7 +11,7 @@ TRANSCRIPT_DIR = f"{BASE_DATA}/transcripts"
 os.makedirs(AUDIO_DIR, exist_ok=True)
 os.makedirs(TRANSCRIPT_DIR, exist_ok=True)
 
-model = whisper.load_model("small")  # balanced speed + accuracy
+model = whisper.load_model("small")
 
 
 def extract_audio_from_video(video_path: str) -> str:

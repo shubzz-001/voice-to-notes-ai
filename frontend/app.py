@@ -50,16 +50,11 @@ st.markdown("""
         padding-top: 2rem;
         padding-bottom: 2rem;
         max-width: 1400px;
-        background-color: transparent;
     }
 
-    /* Remove white container */
-    .element-container {
-        background-color: transparent;
-    }
-
-    div[data-testid="stVerticalBlock"] > div:has(div.element-container):first-child {
-        background-color: transparent;
+    /* Hide the specific white rectangle you found */
+    .block-container > div.stVerticalBlock > div.stElementContainer:nth-of-type(4) {
+        display: none !important;
     }
 
     /* Header Styling */
@@ -359,6 +354,7 @@ st.markdown("""
 # Authentication
 if not st.session_state.token:
     st.markdown('<div class="upload-section">', unsafe_allow_html=True)
+    st.markdown('<div class="upload-section">', unsafe_allow_html=True)
 
     tab1, tab2 = st.tabs(["🔐 Login", "✨ Sign Up"])
 
@@ -421,6 +417,13 @@ if not st.session_state.token:
 
     st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
+
+# Authenticated section
+headers = {"Authorization": f"Bearer {st.session_state.token}"}
+
+# Remove any empty space after authentication check
+st.markdown('<style>div[data-testid="stVerticalBlock"] > div:empty { display: none !important; }</style>',
+            unsafe_allow_html=True)
 
 # Authenticated section
 headers = {"Authorization": f"Bearer {st.session_state.token}"}
@@ -725,7 +728,8 @@ try:
                                 "Full Transcript",
                                 lec["transcript"],
                                 height=400,
-                                label_visibility="collapsed"
+                                label_visibility="collapsed",
+                                key=f"transcript_{lec['id']}"
                             )
                         else:
                             st.info("Transcript not available")
