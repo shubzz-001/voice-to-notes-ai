@@ -1,23 +1,37 @@
-from sqlalchemy import Column, Integer, String, Text, JSON, Float
+from sqlalchemy import Column, Integer, String, Text, JSON, Float, DateTime
+from datetime import datetime
 from backend.database import Base
+
 
 class User(Base):
     __tablename__ = "users"
+    id = Column(Integer, primary_key=True)
+    username = Column(String, unique=True, nullable=False)
+    password = Column(String, nullable=False)
+    # Remove email and created_at to match existing database
 
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True, nullable=False)
-    password = Column(String)
 
 class LectureHistory(Base):
     __tablename__ = "lectures"
+    id = Column(Integer, primary_key=True)
+    username = Column(String, index=True)
 
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String)
+    # Source information
+    source_type = Column(String, default="upload")  # upload, youtube, url
+    source_url = Column(String, nullable=True)  # For YouTube or web URLs
+    title = Column(String, nullable=True)
 
+    # Processing results
     transcript = Column(Text)
     notes = Column(Text)
+    summary = Column(Text)  # Short summary
+    segments = Column(JSON)  # Transcript segments with timestamps
+    topics = Column(JSON)  # Extracted topics
+    flashcards = Column(JSON)  # Generated flashcards
+    key_moments = Column(JSON)  # Timestamped highlights
 
-    segments = Column(JSON)
-
+    # Metadata
     duration_minutes = Column(Float)
-    topics = Column(JSON)
+    language = Column(String, default="en")
+    status = Column(String, default="processing")
+    created_at = Column(DateTime, default=datetime.utcnow)

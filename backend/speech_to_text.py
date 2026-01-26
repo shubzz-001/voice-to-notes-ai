@@ -1,75 +1,53 @@
 import whisper
-from pydub import AudioSegment
 import subprocess
 import os
 import uuid
+from pydub import AudioSegment
 
-# Load Whisper model once
-model = whisper.load_model("base")
+BASE_DATA = "data"
+AUDIO_DIR = f"{BASE_DATA}/audio"
+TRANSCRIPT_DIR = f"{BASE_DATA}/transcripts"
+
+os.makedirs(AUDIO_DIR, exist_ok=True)
+os.makedirs(TRANSCRIPT_DIR, exist_ok=True)
+
+model = whisper.load_model("small")  # balanced speed + accuracy
 
 
 def extract_audio_from_video(video_path: str) -> str:
-    """
-    Extract audio from video file using FFmpeg
-    """
-    audio_path = f"data/audio/{uuid.uuid4()}.wav"
+    audio_path = f"{AUDIO_DIR}/{uuid.uuid4().hex}.wav"
 
     command = [
-        "ffmpeg",
+        "ffmpeg", "-y",
         "-i", video_path,
-        "-vn",
-        "-acodec", "pcm_s16le",
-        "-ar", "16000",
+        "-map", "a:0",
         "-ac", "1",
-        audio_path,
-        "-y"
+        "-ar", "16000",
+        "-vn",
+        "-loglevel", "error",
+        audio_path
     ]
-
-    subprocess.run(
-        command,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL
-    )
-
+    subprocess.run(command, check=True)
     return audio_path
 
 
-def split_audio(audio_path: str, chunk_length_ms=5 * 60 * 1000):
-    """
-    Split audio into WAV chunks (5 minutes default)
-    """
+def split_audio(audio_path, chunk_length_ms=10 * 60 * 1000):
     audio = AudioSegment.from_file(audio_path)
     chunks = []
 
     for i in range(0, len(audio), chunk_length_ms):
-        chunk = audio[i:i + chunk_length_ms]
-        chunk_path = f"{audio_path}_chunk_{i // chunk_length_ms}.wav"
-        chunk.export(chunk_path, format="wav")
+        chunk_path = f"{audio_path}_chunk_{i}.wav"
+        audio[i:i+chunk_length_ms].export(chunk_path, format="wav")
         chunks.append(chunk_path)
 
     return chunks
 
 
-
-# Main Transcription Function
-
 def transcribe(file_path: str):
-    """
-    Transcribe audio OR video file using Whisper
-    Returns:
-    {
-        "text": full transcript,
-        "segments": [
-            {"start": float, "end": float, "text": str}
-        ]
-    }
-    """
-
     ext = file_path.split(".")[-1].lower()
     temp_audio = None
 
-    # If video → extract audio
-    if ext in ["mp4", "mkv", "avi", "mov"]:
+    if ext in ["mp4", "mkv", "avi", "mov", "webm"]:
         temp_audio = extract_audio_from_video(file_path)
         audio_path = temp_audio
     else:
@@ -77,37 +55,36 @@ def transcribe(file_path: str):
 
     chunks = split_audio(audio_path)
 
-    full_text = ""
-    all_segments = []
-
-    current_offset = 0.0  # keeps correct timestamps across chunks
+    full_text = []
+    segments = []
+    offset = 0.0
 
     for chunk in chunks:
-        result = model.transcribe(chunk, fp16=False)
+        result = model.transcribe(chunk, fp16=False, language="en")
+        full_text.append(result["text"])
 
-        # Append text
-        full_text += result["text"] + " "
-
-        # Adjust timestamps for each chunk
         for seg in result["segments"]:
-            all_segments.append({
-                "start": round(seg["start"] + current_offset, 2),
-                "end": round(seg["end"] + current_offset, 2),
-                "text": seg["text"].strip()
+            segments.append({
+                "start": round(seg["start"] + offset, 2),
+                "end": round(seg["end"] + offset, 2),
+                "text": seg["text"]
             })
 
-        # Estimate duration of this chunk for offset
-        audio_chunk = AudioSegment.from_file(chunk)
-        current_offset += len(audio_chunk) / 1000.0  # ms → sec
-
+        duration = AudioSegment.from_file(chunk)
+        offset += len(duration) / 1000
         os.remove(chunk)
 
-    # Cleanup extracted audio
-    if temp_audio and os.path.exists(temp_audio):
+    if temp_audio:
         os.remove(temp_audio)
 
-    return {
-        "text": full_text.strip(),
-        "segments": all_segments
-    }
+    transcript_text = " ".join(full_text)
 
+    transcript_path = f"{TRANSCRIPT_DIR}/{uuid.uuid4().hex}.txt"
+    with open(transcript_path, "w", encoding="utf-8") as f:
+        f.write(transcript_text)
+
+    return {
+        "text": transcript_text,
+        "segments": segments,
+        "transcript_path": transcript_path
+    }
